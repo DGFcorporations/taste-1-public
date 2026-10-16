@@ -218,15 +218,33 @@ class Store:
 
     @staticmethod
     def _row_to_standard(r: sqlite3.Row) -> Standard:
+        try:
+            prov = Provenance(r["provenance"])
+        except (ValueError, KeyError):
+            prov = Provenance.CORRECTION
+        try:
+            cat = Category(r["category"])
+        except (ValueError, KeyError):
+            cat = Category.DOCTRINE
+        try:
+            pol = Polarity(r["polarity"])
+        except (ValueError, KeyError):
+            pol = Polarity.NEVER
+        try:
+            st = LayerState(r["state"])
+        except (ValueError, KeyError):
+            st = LayerState.ACTIVE
+        supersedes = json.loads(r["supersedes"]) if r["supersedes"] else []
+        variant_meta = json.loads(r["variant_meta"]) if r["variant_meta"] else {}
         return Standard(
             id=r["id"], profile_id=r["profile_id"],
-            category=Category(r["category"]), polarity=Polarity(r["polarity"]),
+            category=cat, polarity=pol,
             directive=r["directive"], rationale=r["rationale"],
-            confidence=r["confidence"], provenance=Provenance(r["provenance"]),
-            state=LayerState(r["state"]),
-            supersedes=json.loads(r["supersedes"]),
+            confidence=r["confidence"], provenance=prov,
+            state=st,
+            supersedes=supersedes,
             created=r["created"], updated=r["updated"],
-            variant_meta=json.loads(r["variant_meta"]),
+            variant_meta=variant_meta,
         )
 
     # ------------------------------------------------------------ decisions
